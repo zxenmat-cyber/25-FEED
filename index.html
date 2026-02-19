@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>25 FEED SOCIAL</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f0f0f;
+  color:white;
+}
+header{
+  background:#1a001f;
+  color:violet;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+}
+.container{
+  padding:20px;
+}
+input,textarea{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+  background:#1e1e1e;
+  border:1px solid violet;
+  color:white;
+}
+button{
+  background:violet;
+  border:none;
+  padding:8px;
+  color:black;
+  font-weight:bold;
+  margin-top:5px;
+  cursor:pointer;
+  transition:0.3s;
+}
+button:hover{opacity:0.8;}
+.section{display:none; padding:20px; margin-bottom:70px;}
+.active{display:block;}
+.post{
+  background:#1e1e1e;
+  padding:10px;
+  margin-top:10px;
+  border-left:4px solid violet;
+  display:flex;
+}
+.post .profile-img{
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid violet;
+  margin-right:10px;
+}
+.post .post-content{
+  flex:1;
+}
+.top-nav{
+  display:flex;
+  justify-content:space-around;
+  background:#140017;
+  padding:10px 0;
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:999;
+}
+.top-nav div{
+  cursor:pointer;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-size:12px;
+}
+.top-nav svg{width:24px;height:24px;margin-bottom:2px; fill:white;}
+.fade-in{
+  animation:fadeIn 0.6s ease forwards;
+}
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(-10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+.auth-box{
+  max-width:400px;
+  margin:auto;
+  padding:20px;
+  background:#1e1e1e;
+  border:2px solid violet;
+  border-radius:10px;
+}
+.emojiBox span{
+  cursor:pointer;
+  margin-right:5px;
+}
+</style>
+</head>
+<body>
+
+<header>25 FEED SOCIAL</header>
+
+<div class="container">
+
+<!-- LANDING PAGE CHOICE -->
+<div id="landing" class="auth-box">
+  <h2>Welcome to 25 FEED SOCIAL</h2>
+  <button onclick="showRegister()">Register</button>
+  <button onclick="showLogin()">Login</button>
+</div>
+
+<!-- REGISTER -->
+<div id="registerBox" class="auth-box" style="display:none;">
+  <h2>Register</h2>
+  <input id="regUser" placeholder="Username">
+  <input id="regPass" type="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+  <p id="msg" style="color:yellow;"></p>
+</div>
+
+<!-- LOGIN -->
+<div id="loginBox" class="auth-box" style="display:none; opacity:0;">
+  <h2>Login</h2>
+  <input id="logUser" placeholder="Username">
+  <input id="logPass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- MAIN APP -->
+<div id="main" style="display:none; padding-top:60px;">
+
+  <!-- TOP NAV -->
+  <div class="top-nav">
+    <div onclick="show('home')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Home
+    </div>
+    <div onclick="show('message')">
+      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v16l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      Messages
+    </div>
+    <div onclick="show('account')">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg>
+      My Account
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="home" class="section active">
+    <h2>Home</h2>
+    <textarea id="postText" placeholder="What's on your mind?"></textarea>
+    <input type="file" id="postMedia">
+    <button onclick="addPost()">Post</button>
+    <div id="posts"></div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div id="message" class="section">
+    <h2>Messages</h2>
+    <input id="chatUser" placeholder="Send to (username)">
+    <textarea id="chatText" placeholder="Type message..."></textarea>
+    <button onclick="sendMessage()">Send</button>
+    <div id="chatBox"></div>
+  </div>
+
+  <!-- ACCOUNT -->
+  <div id="account" class="section">
+    <h2>My Account</h2>
+    <img id="profilePreview" class="profile-pic" src="">
+    <input type="file" onchange="changeProfile(event)">
+    <input id="newName" placeholder="Change Username">
+    <button onclick="changeName()">Update Name</button>
+    <h3>Add Friend</h3>
+    <input id="friendName" placeholder="Friend Username">
+    <button onclick="addFriend()">Add</button>
+    <div id="friendsList"></div>
+    <br>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+// Elements
+const msg = document.getElementById("msg");
+const postsDiv = document.getElementById("posts");
+const postText = document.getElementById("postText");
+
+// Persistent login
+window.onload = function(){
+  let current = localStorage.getItem("currentUser");
+  if(current){
+    showMain();
+    document.getElementById("profilePreview").src = localStorage.getItem("profile_"+current)||"";
+    loadFeed();
+  }
+}
+
+// Show sections
+function showRegister(){
+  document.getElementById("landing").style.display="none";
+  document.getElementById("registerBox").style.display="block";
+  document.getElementById("loginBox").style.display="none";
+}
+function showLogin(){
+  document.getElementById("landing").style.display="none";
+  document.getElementById("loginBox").style.display="block";
+  document.getElementById("registerBox").style.display="none";
+  setTimeout(()=>{
+    document.getElementById("loginBox").style.opacity="1"; 
+    document.getElementById("loginBox").classList.add("fade-in");
+  },100);
+}
+function showMain(){
+  document.getElementById("landing").style.display="none";
+  document.getElementById("registerBox").style.display="none";
+  document.getElementById("loginBox").style.display="none";
+  document.getElementById("main").style.display="block";
+}
+function show(sec){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(sec).classList.add("active");
+}
+
+// Register
+function register(){
+  let u=document.getElementById("regUser").value.trim();
+  let p=document.getElementById("regPass").value.trim();
+  if(!u||!p){ msg.innerText="Fill all fields!"; return; }
+  if(localStorage.getItem("user_"+u)){ msg.innerText="Username already exists!"; return; }
+  localStorage.setItem("user_"+u,p);
+  msg.innerText="Registered! Login below.";
+  showLogin();
+}
+
+// Login
+function login(){
+  let u=document.getElementById("logUser").value.trim();
+  let p=document.getElementById("logPass").value.trim();
+  if(localStorage.getItem("user_"+u) === p){
+    localStorage.setItem("currentUser",u);
+    showMain();
+    document.getElementById("profilePreview").src=localStorage.getItem("profile_"+u)||"";
+    loadFeed();
+  }else{ alert("Wrong account!"); }
+}
+
+// Logout
+function logout(){
+  localStorage.removeItem("currentUser");
+  document.getElementById("main").style.display="none";
+  document.getElementById("landing").style.display="block";
+}
+
+// Add friend
+function addFriend(){
+  let f=document.getElementById("friendName").value.trim();
+  if(!f)return;
+  if(!localStorage.getItem("user_"+f)){alert("User does not exist!"); return;}
+  let div=document.createElement("div");
+  div.innerText=f;
+  document.getElementById("friendsList").appendChild(div);
+}
+
+// Change profile
+function changeProfile(e){
+  let reader=new FileReader();
+  reader.onload=function(){
+    document.getElementById("profilePreview").src=reader.result;
+    localStorage.setItem("profile_"+localStorage.getItem("currentUser"),reader.result);
+    loadFeed();
+  }
+  reader.readAsDataURL(e.target.files[0]);
+}
+
+// Change username
+function changeName(){
+  let newN=document.getElementById("newName").value.trim();
+  let old=localStorage.getItem("currentUser");
+  if(!newN)return;
+  if(localStorage.getItem("user_"+newN)){alert("Username exists!"); return;}
+  let pass=localStorage.getItem("user_"+old);
+  localStorage.setItem("user_"+newN,pass);
+  localStorage.removeItem("user_"+old);
+  localStorage.setItem("currentUser",newN);
+  alert("Name updated!");
+  loadFeed();
+}
+
+// Send message
+function sendMessage(){
+  let to=document.getElementById("chatUser").value.trim();
+  let text=document.getElementById("chatText").value.trim();
+  if(!to || !text) return;
+  if(!localStorage.getItem("user_"+to)){alert("User does not exist!"); return;}
+  let div=document.createElement("div");
+  div.innerHTML="<b>To "+to+":</b> "+text;
+  document.getElementById("chatBox").appendChild(div);
+  document.getElementById("chatText").value="";
+}
+
+// Add post
+function addPost(){
+  let text = postText.value.trim();
+  let media = document.getElementById("postMedia").files[0];
+  if(!text && !media) return;
+  let user = localStorage.getItem("currentUser");
+  let profile = localStorage.getItem("profile_"+user)||'';
+  let mediaData = null, mediaType = null;
+  if(media){
+    mediaType = media.type;
+    mediaData = URL.createObjectURL(media);
+  }
+  let feed = JSON.parse(localStorage.getItem("feedPosts")||"[]");
+  feed.push({
+    user:user,
+    profile:profile,
+    content:text,
+    media:mediaData,
+    mediaType:mediaType,
+    likes:0,
+    comments:[],
+    timestamp:Date.now()
+  });
+  localStorage.setItem("feedPosts",JSON.stringify(feed));
+  postText.value=""; document.getElementById("postMedia").value="";
+  loadFeed();
+}
+
+// Load feed
+function loadFeed(){
+  postsDiv.innerHTML="";
+  let feed = JSON.parse(localStorage.getItem("feedPosts")||"[]");
+  feed.sort((a,b)=>b.timestamp-a.timestamp).forEach((p,i)=>{
+    let postDiv=document.createElement("div");
+    postDiv.className="post";
+    postDiv.innerHTML=`
+      <img src="${p.profile||''}" class="profile-img">
+      <div class="post-content">
+        <b>${p.user}</b><br>${p.content}
+        ${p.media? (p.mediaType.startsWith("image")?`<br><img src="${p.media}" width="100%">`:`<br><video src="${p.media}" controls width="100%"></video>`):''}
+        <div style="margin-top:10px;">
+          <button class="likeBtn">Like</button> <span class="likeCount">${p.likes}</span>
+          <button class="commentBtn">Comment</button>
+          <button class="shareBtn">Share</button>
+        </div>
+        <div class="emojiBox" style="display:none; margin-top:5px;">
+          <span>👍</span><span>❤️</span><span>😢</span>
+        </div>
+        <div class="commentSection" style="margin-top:10px;"></div>
+      </div>
+    `;
+    postsDiv.appendChild(postDiv);
+
+    // Like / emoji
+    let likeBtn=postDiv.querySelector(".likeBtn");
+    let likeCount=postDiv.querySelector(".likeCount");
+    let emojiBox=postDiv.querySelector(".emojiBox");
+    let count = p.likes;
+    likeBtn.addEventListener("click",()=>{
+      count++; likeCount.innerText=count;
+      feed[i].likes=count;
+      localStorage.setItem("feedPosts",JSON.stringify(feed));
+    });
+    likeBtn.addEventListener("mousedown",()=>{emojiBox.style.display="block";});
+    likeBtn.addEventListener("mouseleave",()=>{emojiBox.style.display="none";});
+    likeBtn.addEventListener("mouseup",()=>{emojiBox.style.display="none";});
+    emojiBox.querySelectorAll("span").forEach(emoji=>{
+      emoji.addEventListener("click",()=>{
+        count++;
+        likeCount.innerText=count + " " + emoji.innerText;
+        feed[i].likes=count;
+        localStorage.setItem("feedPosts",JSON.stringify(feed));
+        emojiBox.style.display="none";
+      });
+    });
+
+    // Comment
+    let commentBtn=postDiv.querySelector(".commentBtn");
+    let commentSection=postDiv.querySelector(".commentSection");
+    p.comments.forEach(c=>{
+      let cDiv=document.createElement("div");
+      cDiv.innerHTML=`<b>${c.user}:</b> ${c.text}`;
+      commentSection.appendChild(cDiv);
+    });
+    commentBtn.addEventListener("click",()=>{
+      let cInput=document.createElement("input");
+      cInput.placeholder="Write a comment...";
+      cInput.style.width="90%"; cInput.style.marginTop="5px";
+      let cBtn=document.createElement("button"); cBtn.innerText="Post"; cBtn.style.marginLeft="5px";
+      commentSection.appendChild(cInput); commentSection.appendChild(cBtn);
+      cBtn.addEventListener("click",()=>{
+        if(cInput.value){
+          let cDiv=document.createElement("div");
+          cDiv.innerHTML=`<b>${localStorage.getItem("currentUser")}:</b> ${cInput.value}`;
+          commentSection.appendChild(cDiv);
+          feed[i].comments.push({user:localStorage.getItem("currentUser"), text:cInput.value});
+          localStorage.setItem("feedPosts",JSON.stringify(feed));
+          cInput.value="";
+        }
+      });
+    });
+
+    // Share
+    let shareBtn=postDiv.querySelector(".shareBtn");
+    shareBtn.addEventListener("click",()=>{alert("You shared this post!");});
+  });
+}
+</script>
+</body>
+</html>
